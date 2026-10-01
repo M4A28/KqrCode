@@ -86,10 +86,10 @@ android {
     buildTypes {
         release {
             optimization {
-                enable = true
+                enable = false
             }
             // Strip unused resources from the release APK.
-            isShrinkResources = true
+
         }
     }
     compileOptions {
