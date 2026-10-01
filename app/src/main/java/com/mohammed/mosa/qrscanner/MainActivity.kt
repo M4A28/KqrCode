@@ -2,6 +2,8 @@ package com.mohammed.mosa.qrscanner
 
 
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,9 +25,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.first
 import com.mohammed.mosa.qrscanner.data.AppSettings
 import com.mohammed.mosa.qrscanner.data.ScanRepository
 import com.mohammed.mosa.qrscanner.data.SettingsRepository
@@ -35,22 +40,39 @@ import com.mohammed.mosa.qrscanner.scanner.ScannerScreen
 import com.mohammed.mosa.qrscanner.settings.SettingsScreen
 import com.mohammed.mosa.qrscanner.ui.theme.*
 
-private enum class Tab(val label: String, val icon: ImageVector) {
-    Scan("Scan", Icons.Rounded.QrCodeScanner),
-    Create("Create", Icons.Rounded.QrCode2),
-    History("History", Icons.Rounded.History),
-    Settings("Settings", Icons.Rounded.Settings),
+private enum class Tab(val labelRes: Int, val icon: ImageVector) {
+    Scan(R.string.tab_scan, Icons.Rounded.QrCodeScanner),
+    Create(R.string.tab_create, Icons.Rounded.QrCode2),
+    History(R.string.tab_history, Icons.Rounded.History),
+    Settings(R.string.tab_settings, Icons.Rounded.Settings),
 }
 
 class MainActivity : ComponentActivity() {
+
+    /** Splash stays up until the saved theme/accent has actually loaded. */
+    private val appReady = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen().setKeepOnScreenCondition { !appReady.value }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Launched via "share → QR Scanner" with an image: decode it in the Scan tab.
+        @Suppress("DEPRECATION")
+        val sharedImage: Uri? = intent?.getParcelableExtra(Intent.EXTRA_STREAM)
+
         setContent {
             val repository = remember { ScanRepository.get(applicationContext) }
             val settingsRepo = remember { SettingsRepository.get(applicationContext) }
             val settings by settingsRepo.settings
                 .collectAsStateWithLifecycle(initialValue = AppSettings())
+
+            // Reveal the app only after the real settings emission, so the
+            // saved theme and accent are applied behind the splash — no flicker.
+            LaunchedEffect(Unit) {
+                settingsRepo.settings.first()
+                appReady.value = true
+            }
 
             LaunchedEffect(settings.accent) {
                 Brand = runCatching {
@@ -68,12 +90,17 @@ class MainActivity : ComponentActivity() {
                 }
 
                 var tab by rememberSaveable { mutableStateOf(Tab.Scan) }
+                var pendingImage by remember { mutableStateOf(sharedImage) }
 
                 Column(Modifier.fillMaxSize().background(pc.bg)) {
                     Box(Modifier.weight(1f)) {
                         Crossfade(tab, animationSpec = tween(Ui.duration, easing = Ui.easing)) { t ->
                             when (t) {
-                                Tab.Scan -> ScannerScreen(repository)
+                                Tab.Scan -> ScannerScreen(
+                                    repository,
+                                    incomingImage = pendingImage,
+                                    onIncomingImageHandled = { pendingImage = null },
+                                )
                                 Tab.Create -> GeneratorScreen(repository)
                                 Tab.History -> HistoryScreen(repository)
                                 Tab.Settings -> SettingsScreen(repository, settingsRepo)
@@ -85,8 +112,8 @@ class MainActivity : ComponentActivity() {
                             NavigationBarItem(
                                 selected = tab == t,
                                 onClick = { tab = t },
-                                icon = { Icon(t.icon, contentDescription = t.label) },
-                                label = { Text(t.label) },
+                                icon = { Icon(t.icon, contentDescription = stringResource(t.labelRes)) },
+                                label = { Text(stringResource(t.labelRes)) },
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = Brand,
                                     selectedTextColor = Brand,

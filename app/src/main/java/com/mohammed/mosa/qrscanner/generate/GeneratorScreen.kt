@@ -53,6 +53,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.mohammed.mosa.qrscanner.R
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -60,7 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mohammed.mosa.qrscanner.data.ScanRepository
 import com.mohammed.mosa.qrscanner.ui.theme.Brand
-import com.mohammed.mosa.qrscanner.ui.theme.Ink
+
 import com.mohammed.mosa.qrscanner.ui.theme.PC
 import com.mohammed.mosa.qrscanner.ui.theme.Ui
 import com.mohammed.mosa.qrscanner.util.ShareUtils
@@ -83,21 +85,38 @@ private val CodeColors = listOf(
     Color(0xFFFF5C8A),
 )
 
-private enum class ContentType(val label: String, val icon: ImageVector) {
-    TEXT("Text", Icons.Rounded.Notes),
-    LINK("Link", Icons.Rounded.Link),
-    WIFI("Wi-Fi", Icons.Rounded.Wifi),
-    CONTACT("Contact", Icons.Rounded.Person),
-    EMAIL("Email", Icons.Rounded.Email),
-    PHONE("Phone", Icons.Rounded.Call),
-    SMS("SMS", Icons.Rounded.Sms),
-    LOCATION("Location", Icons.Rounded.Place),
+private enum class ContentType(val labelRes: Int, val icon: ImageVector) {
+    TEXT(R.string.gen_type_text, Icons.Rounded.Notes),
+    LINK(R.string.gen_type_link, Icons.Rounded.Link),
+    WIFI(R.string.gen_type_wifi, Icons.Rounded.Wifi),
+    CONTACT(R.string.gen_type_contact, Icons.Rounded.Person),
+    EMAIL(R.string.gen_type_email, Icons.Rounded.Email),
+    PHONE(R.string.gen_type_phone, Icons.Rounded.Call),
+    SMS(R.string.gen_type_sms, Icons.Rounded.Sms),
+    LOCATION(R.string.gen_type_location, Icons.Rounded.Place),
 }
 
-private enum class WifiSecurity(val token: String, val label: String) {
-    NONE("nopass", "Open"),
-    WPA("WPA", "WPA/WPA2"),
-    WEP("WEP", "WEP"),
+private enum class WifiSecurity(val token: String, val labelRes: Int) {
+    NONE("nopass", R.string.gen_sec_open),
+    WPA("WPA", R.string.gen_sec_wpa),
+    WEP("WEP", R.string.gen_sec_wep),
+}
+
+/** Localized input hint per barcode format. */
+private fun GenFormat.hintRes(): Int = when (this) {
+    GenFormat.QR -> R.string.gen_hint_qr
+    GenFormat.EAN13 -> R.string.gen_hint_ean13
+    GenFormat.EAN8 -> R.string.gen_hint_ean8
+    GenFormat.UPCA -> R.string.gen_hint_upca
+    GenFormat.UPCE -> R.string.gen_hint_upce
+    GenFormat.CODE39 -> R.string.gen_hint_code39
+    GenFormat.CODE93 -> R.string.gen_hint_code93
+    GenFormat.CODE128 -> R.string.gen_hint_code128
+    GenFormat.CODABAR -> R.string.gen_hint_codabar
+    GenFormat.ITF -> R.string.gen_hint_itf
+    GenFormat.PDF417 -> R.string.gen_hint_pdf417
+    GenFormat.AZTEC -> R.string.gen_hint_aztec
+    GenFormat.DATA_MATRIX -> R.string.gen_hint_datamatrix
 }
 
 /* ---------------- payload builders ---------------- */
@@ -224,7 +243,7 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
         }
         outcome.fold(
             onSuccess = { bitmap = it; error = null },
-            onFailure = { bitmap = null; error = it.message ?: "Invalid content for ${format.label}" },
+            onFailure = { bitmap = null; error = it.message ?: context.getString(R.string.gen_invalid_content, format.label) },
         )
         generating = false
     }
@@ -233,7 +252,7 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
         mailAddr, mailSubject, mailBody, telNumber, smsNumber, smsBody, lat, lng)
         .any { it.isNotEmpty() }
 
-    Box(modifier.fillMaxSize().background(Ink)) {
+    Box(modifier.fillMaxSize().background(PC.bg)) {
         Column(
             Modifier
                 .fillMaxSize()
@@ -244,9 +263,9 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
             /* ---- header ---- */
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Create code", style = MaterialTheme.typography.titleLarge, color = PC.text)
+                    Text(stringResource(R.string.gen_title), style = MaterialTheme.typography.titleLarge, color = PC.text)
                     Text(
-                        "Generates live as you type",
+                        stringResource(R.string.gen_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = PC.text.copy(alpha = 0.55f),
                     )
@@ -258,7 +277,7 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
                         contentColor = PC.text.copy(alpha = 0.6f),
                         disabledContentColor = PC.text.copy(alpha = 0.2f),
                     ),
-                ) { Text("Clear") }
+                ) { Text(stringResource(R.string.common_clear)) }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -297,15 +316,15 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
                 DarkField(
                     value = textValue,
                     onValueChange = { textValue = it },
-                    label = "Barcode content",
-                    supporting = format.hint,
+                    label = stringResource(R.string.gen_field_barcode_content),
+                    supporting = stringResource(format.hintRes()),
                     singleLine = true,
                 )
             }
 
             /* ---- code color ---- */
             Spacer(Modifier.height(18.dp))
-            SectionLabel("Code color")
+            SectionLabel(stringResource(R.string.gen_code_color))
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CodeColors.forEach { c ->
@@ -357,7 +376,7 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
                     onSaveToHistory = {
                         scope.launch {
                             repository.addGenerated(encoded, format.label)
-                            snackbar.showSnackbar("Saved to history")
+                            snackbar.showSnackbar(context.getString(R.string.common_saved_to_history))
                         }
                     },
                 )
@@ -393,16 +412,16 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
                     .navigationBarsPadding()
                     .padding(bottom = 20.dp)
             ) {
-                Text("Choose format", style = MaterialTheme.typography.titleMedium, color = PC.text)
+                Text(stringResource(R.string.gen_format_sheet_title), style = MaterialTheme.typography.titleMedium, color = PC.text)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "2D codes hold text and data — 1D barcodes encode short ASCII",
+                    stringResource(R.string.gen_format_sheet_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = PC.text.copy(alpha = 0.5f),
                 )
                 Spacer(Modifier.height(16.dp))
 
-                GroupLabel("2D codes")
+                GroupLabel(stringResource(R.string.gen_group_2d))
                 GenFormat.entries.filter { it.isTwoDimensional }.chunked(2).forEach { row ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         row.forEach { f ->
@@ -415,7 +434,7 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
                     Spacer(Modifier.height(10.dp))
                 }
 
-                GroupLabel("1D barcodes")
+                GroupLabel(stringResource(R.string.gen_group_1d))
                 GenFormat.entries.filter { !it.isTwoDimensional }.chunked(2).forEach { row ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         row.forEach { f ->
@@ -461,10 +480,10 @@ private fun EmptyPreview() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Rounded.QrCode2, null, tint = PC.text.copy(alpha = 0.25f), modifier = Modifier.size(40.dp))
             Spacer(Modifier.height(12.dp))
-            Text("Live preview", style = MaterialTheme.typography.titleSmall, color = PC.text.copy(alpha = 0.75f))
+            Text(stringResource(R.string.gen_preview_title), style = MaterialTheme.typography.titleSmall, color = PC.text.copy(alpha = 0.75f))
             Spacer(Modifier.height(4.dp))
             Text(
-                "Your code generates automatically as you type",
+                stringResource(R.string.gen_preview_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = PC.text.copy(alpha = 0.45f),
                 textAlign = TextAlign.Center,
@@ -520,7 +539,7 @@ private fun SuccessPreview(
 
         Spacer(Modifier.height(10.dp))
         Text(
-            "${format.label} • $chars characters",
+            stringResource(R.string.gen_chars, format.label, chars),
             style = MaterialTheme.typography.labelMedium,
             color = PC.text3,
         )
@@ -547,7 +566,7 @@ private fun SuccessPreview(
             ) {
                 Icon(Icons.Rounded.Share, null, Modifier.size(15.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Share PNG")
+                Text(stringResource(R.string.gen_share_png))
             }
             Button(
                 onClick = onSave,
@@ -558,7 +577,7 @@ private fun SuccessPreview(
             ) {
                 Icon(Icons.Rounded.Save, null, Modifier.size(15.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Save PNG")
+                Text(stringResource(R.string.gen_save_png))
             }
         }
 
@@ -571,7 +590,7 @@ private fun SuccessPreview(
         ) {
             Icon(Icons.Rounded.BookmarkAdd, null, Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Save to history")
+            Text(stringResource(R.string.gen_save_to_history))
         }
     }
 }
@@ -592,7 +611,7 @@ private fun FormatSelector(selected: GenFormat, onClick: () -> Unit) {
         FormatGlyph(selected, Brand, Modifier.size(width = 26.dp, height = 20.dp))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Format", style = MaterialTheme.typography.labelSmall, color = PC.text.copy(alpha = 0.45f))
+            Text(stringResource(R.string.gen_format), style = MaterialTheme.typography.labelSmall, color = PC.text.copy(alpha = 0.45f))
             Text(selected.label, style = MaterialTheme.typography.bodyMedium, color = PC.text)
         }
         Icon(Icons.Rounded.KeyboardArrowDown, null, tint = PC.text.copy(alpha = 0.4f))
@@ -606,7 +625,7 @@ private fun TemplateChips(current: ContentType, onSelect: (ContentType) -> Unit)
             FilterChip(
                 selected = t == current,
                 onClick = { onSelect(t) },
-                label = { Text(t.label) },
+                label = { Text(stringResource(t.labelRes)) },
                 leadingIcon = { Icon(t.icon, null, modifier = Modifier.size(15.dp)) },
                 modifier = Modifier.padding(end = 8.dp),
                 colors = FilterChipDefaults.filterChipColors(),
@@ -638,30 +657,30 @@ private fun TemplateForm(
     lng: String, onLng: (String) -> Unit,
 ) {
     when (type) {
-        ContentType.TEXT -> DarkField(text, onText, "Text", singleLine = false, minLines = 3)
+        ContentType.TEXT -> DarkField(text, onText, stringResource(R.string.gen_field_text), singleLine = false, minLines = 3)
         ContentType.LINK -> DarkField(
-            link, onLink, "URL",
-            placeholder = "example.com/page",
-            supporting = "https:// is added automatically if missing",
+            link, onLink, stringResource(R.string.gen_field_url),
+            placeholder = stringResource(R.string.gen_field_url_placeholder),
+            supporting = stringResource(R.string.gen_field_url_support),
             leading = Icons.Rounded.Link,
         )
         ContentType.WIFI -> Column {
-            DarkField(ssid, onSsid, "Network name (SSID)", leading = Icons.Rounded.Wifi, placeholder = "MyHomeWiFi")
+            DarkField(ssid, onSsid, stringResource(R.string.gen_field_ssid), leading = Icons.Rounded.Wifi, placeholder = stringResource(R.string.gen_field_ssid_placeholder))
             Spacer(Modifier.height(10.dp))
             DarkField(
-                wifiPass, onWifiPass, "Password",
+                wifiPass, onWifiPass, stringResource(R.string.gen_field_password),
                 leading = Icons.Rounded.Key,
-                supporting = "Stored as plain text inside the code",
+                supporting = stringResource(R.string.gen_field_password_support),
             )
             Spacer(Modifier.height(12.dp))
-            SectionLabel("Security")
+            SectionLabel(stringResource(R.string.gen_security))
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 WifiSecurity.entries.forEach { s ->
                     FilterChip(
                         selected = s == wifiSecurity,
                         onClick = { onWifiSecurity(s) },
-                        label = { Text(s.label) },
+                        label = { Text(stringResource(s.labelRes)) },
                         colors = FilterChipDefaults.filterChipColors(
                             containerColor = PC.text.copy(alpha = 0.06f),
                             labelColor = PC.text.copy(alpha = 0.8f),
@@ -678,7 +697,7 @@ private fun TemplateForm(
             ) {
                 Icon(Icons.Rounded.WifiOff, null, tint = PC.text.copy(alpha = 0.6f), modifier = Modifier.size(17.dp))
                 Spacer(Modifier.width(10.dp))
-                Text("Hidden network", style = MaterialTheme.typography.bodyMedium, color = PC.text, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.gen_hidden_network), style = MaterialTheme.typography.bodyMedium, color = PC.text, modifier = Modifier.weight(1f))
                 Switch(
                     checked = wifiHidden,
                     onCheckedChange = onWifiHidden,
@@ -694,48 +713,48 @@ private fun TemplateForm(
             }
         }
         ContentType.CONTACT -> Column {
-            DarkField(cName, onCName, "Full name", leading = Icons.Rounded.Person)
+            DarkField(cName, onCName, stringResource(R.string.gen_field_name), leading = Icons.Rounded.Person)
             Spacer(Modifier.height(10.dp))
-            DarkField(cOrg, onCOrg, "Company", leading = Icons.Rounded.Work)
+            DarkField(cOrg, onCOrg, stringResource(R.string.gen_field_company), leading = Icons.Rounded.Work)
             Spacer(Modifier.height(10.dp))
-            DarkField(cPhone, onCPhone, "Phone", leading = Icons.Rounded.Call, keyboardType = KeyboardType.Phone)
+            DarkField(cPhone, onCPhone, stringResource(R.string.gen_field_phone), leading = Icons.Rounded.Call, keyboardType = KeyboardType.Phone)
             Spacer(Modifier.height(10.dp))
-            DarkField(cEmail, onCEmail, "Email", leading = Icons.Rounded.Email, keyboardType = KeyboardType.Email)
+            DarkField(cEmail, onCEmail, stringResource(R.string.gen_field_email), leading = Icons.Rounded.Email, keyboardType = KeyboardType.Email)
         }
         ContentType.EMAIL -> Column {
             DarkField(
-                mailAddr, onMailAddr, "Recipient",
-                placeholder = "name@example.com",
+                mailAddr, onMailAddr, stringResource(R.string.gen_field_recipient),
+                placeholder = stringResource(R.string.gen_field_recipient_placeholder),
                 leading = Icons.Rounded.Email,
                 keyboardType = KeyboardType.Email,
             )
             Spacer(Modifier.height(10.dp))
-            DarkField(mailSubject, onMailSubject, "Subject", leading = Icons.Rounded.ShortText)
+            DarkField(mailSubject, onMailSubject, stringResource(R.string.gen_field_subject), leading = Icons.Rounded.ShortText)
             Spacer(Modifier.height(10.dp))
-            DarkField(mailBody, onMailBody, "Message", singleLine = false, minLines = 3)
+            DarkField(mailBody, onMailBody, stringResource(R.string.gen_field_message), singleLine = false, minLines = 3)
         }
         ContentType.PHONE -> DarkField(
-            telNumber, onTel, "Phone number",
+            telNumber, onTel, stringResource(R.string.gen_field_phone_number),
             leading = Icons.Rounded.Call,
             keyboardType = KeyboardType.Phone,
         )
         ContentType.SMS -> Column {
             DarkField(
-                smsNumber, onSmsNumber, "Phone number",
+                smsNumber, onSmsNumber, stringResource(R.string.gen_field_phone_number),
                 leading = Icons.Rounded.Call,
                 keyboardType = KeyboardType.Phone,
             )
             Spacer(Modifier.height(10.dp))
-            DarkField(smsBody, onSmsBody, "Message", singleLine = false, minLines = 3)
+            DarkField(smsBody, onSmsBody, stringResource(R.string.gen_field_message), singleLine = false, minLines = 3)
         }
         ContentType.LOCATION -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             DarkField(
-                lat, onLat, "Latitude",
+                lat, onLat, stringResource(R.string.gen_field_latitude),
                 modifier = Modifier.weight(1f),
                 keyboardType = KeyboardType.Decimal,
             )
             DarkField(
-                lng, onLng, "Longitude",
+                lng, onLng, stringResource(R.string.gen_field_longitude),
                 modifier = Modifier.weight(1f),
                 keyboardType = KeyboardType.Decimal,
             )
@@ -747,7 +766,7 @@ private fun TemplateForm(
 private fun EncodedBox(payload: String) {
     Column {
         Text(
-            "Encoded data",
+            stringResource(R.string.gen_encoded_data),
             style = MaterialTheme.typography.labelSmall,
             color = PC.text.copy(alpha = 0.45f),
             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),

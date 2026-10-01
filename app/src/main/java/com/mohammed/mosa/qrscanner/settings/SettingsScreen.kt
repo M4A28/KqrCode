@@ -20,8 +20,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mohammed.mosa.qrscanner.R
 import com.mohammed.mosa.qrscanner.data.AppSettings
 import com.mohammed.mosa.qrscanner.data.CsvExporter
 import com.mohammed.mosa.qrscanner.data.ScanRepository
@@ -34,12 +36,12 @@ import com.mohammed.mosa.qrscanner.util.ShareUtils
 import kotlinx.coroutines.launch
 
 private val AccentOptions = listOf(
-    "#7C5CFC" to "Violet",
-    "#4C8DFF" to "Blue",
-    "#2EC4B6" to "Teal",
-    "#34C77B" to "Green",
-    "#FF9F43" to "Orange",
-    "#FF5C8A" to "PPC.bg",
+    "#7C5CFC" to R.string.accent_violet,
+    "#4C8DFF" to R.string.accent_blue,
+    "#2EC4B6" to R.string.accent_teal,
+    "#34C77B" to R.string.accent_green,
+    "#FF9F43" to R.string.accent_orange,
+    "#FF5C8A" to R.string.accent_pink,
 )
 private val Destructive = Color(0xFFFF6B6B)
 
@@ -77,7 +79,11 @@ fun SettingsScreen(
                 .statusBarsPadding()
                 .padding(16.dp)
         ) {
-            Text("Settings", style = MaterialTheme.typography.titleLarge, color = Color.White)
+            Text(
+                stringResource(R.string.set_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = PC.text,
+            )
             Spacer(Modifier.height(16.dp))
 
             /* ---- stats ---- */
@@ -86,82 +92,86 @@ fun SettingsScreen(
                     Modifier.fillMaxWidth().padding(vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Stat("Total scans", scans.size.toString(), Modifier.weight(1f))
-                    Box(Modifier.width(1.dp).height(36.dp).background(Color.White.copy(alpha = 0.08f)))
-                    Stat("This week", weekCount.toString(), Modifier.weight(1f))
+                    Stat(stringResource(R.string.set_stat_total), scans.size.toString(), Modifier.weight(1f))
+                    Box(Modifier.width(1.dp).height(36.dp).background(PC.borderSoft))
+                    Stat(stringResource(R.string.set_stat_week), weekCount.toString(), Modifier.weight(1f))
                 }
             }
-            SectionHeader("Scanning")
+            SectionHeader(stringResource(R.string.set_section_scanning))
             SettingsCard {
                 ToggleRow(
                     icon = Icons.Rounded.SaveAlt,
-                    title = "Auto-save scans",
-                    subtitle = "Every scan is stored in history",
+                    title = stringResource(R.string.set_autosave_title),
+                    subtitle = stringResource(R.string.set_autosave_subtitle),
                     checked = settings.autoSave,
                 ) { scope.launch { settingsRepository.setAutoSave(it) } }
                 Divider()
                 ToggleRow(
                     icon = Icons.Rounded.AllInclusive,
-                    title = "Continuous scan",
-                    subtitle = "Keep scanning while a result is shown",
+                    title = stringResource(R.string.set_continuous_title),
+                    subtitle = stringResource(R.string.set_continuous_subtitle),
                     checked = settings.continuousScan,
                 ) { scope.launch { settingsRepository.setContinuousScan(it) } }
                 Divider()
                 ToggleRow(
                     icon = Icons.Rounded.ContentCopy,
-                    title = "Auto-copy to clipboard",
-                    subtitle = "Copy the value as soon as it's detected",
+                    title = stringResource(R.string.set_autocopy_title),
+                    subtitle = stringResource(R.string.set_autocopy_subtitle),
                     checked = settings.autoCopy,
                 ) { scope.launch { settingsRepository.setAutoCopy(it) } }
 
                 Divider()
                 ToggleRow(
                     icon = Icons.Rounded.OpenInNew,
-                    title = "Auto-open Urls",
-                    subtitle = "Open the browser when a URL is scanned",
+                    title = stringResource(R.string.set_autoopen_title),
+                    subtitle = stringResource(R.string.set_autoopen_subtitle),
                     checked = settings.autoOpenUrl,
                 ) { scope.launch { settingsRepository.setAutoOpenUrl(it) } }
             }
 
-            SectionHeader("Feedback")
+            SectionHeader(stringResource(R.string.set_section_feedback))
             SettingsCard {
                 ToggleRow(
                     icon = Icons.Rounded.VolumeUp,
-                    title = "Beep on scan",
-                    subtitle = "Play a confirmation tone",
+                    title = stringResource(R.string.set_beep_title),
+                    subtitle = stringResource(R.string.set_beep_subtitle),
                     checked = settings.sound,
                 ) { scope.launch { settingsRepository.setSound(it) } }
                 Divider()
                 ToggleRow(
                     icon = Icons.Rounded.Vibration,
-                    title = "Vibrate on scan",
-                    subtitle = "Short haptic pulse on detection",
+                    title = stringResource(R.string.set_vibrate_title),
+                    subtitle = stringResource(R.string.set_vibrate_subtitle),
                     checked = settings.vibrate,
                 ) { scope.launch { settingsRepository.setVibrate(it) } }
             }
 
-            SectionHeader("Camera")
+            SectionHeader(stringResource(R.string.set_section_camera))
             SettingsCard {
                 ToggleRow(
                     icon = Icons.Rounded.CameraFront,
-                    title = "Use front camera",
-                    subtitle = "Switch between rear and front lens",
+                    title = stringResource(R.string.set_frontcam_title),
+                    subtitle = stringResource(R.string.set_frontcam_subtitle),
                     checked = settings.useFrontCamera,
                 ) { scope.launch { settingsRepository.setUseFrontCamera(it) } }
             }
 
-            SectionHeader("Appearance")
+            SectionHeader(stringResource(R.string.set_section_appearance))
             SettingsCard {
                 Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RowIcon(Icons.Rounded.Palette)
                         Spacer(Modifier.width(12.dp))
                         Column {
-                            Text("Accent color", style = MaterialTheme.typography.bodyMedium, color = Color.White)
                             Text(
-                                "Applies across the whole app instantly",
+                                stringResource(R.string.set_accent_title),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = PC.text,
+                            )
+                            Text(
+                                stringResource(R.string.set_accent_subtitle),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.45f),
+                                color = PC.text3,
                             )
                         }
                     }
@@ -170,7 +180,7 @@ fun SettingsScreen(
                         Modifier.horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        AccentOptions.forEach { (hex, name) ->
+                        AccentOptions.forEach { (hex, nameRes) ->
                             val color = remember(hex) {
                                 runCatching {
                                     Color(android.graphics.Color.parseColor(hex))
@@ -184,14 +194,19 @@ fun SettingsScreen(
                                     .background(color)
                                     .border(
                                         if (selected) 2.dp else 1.dp,
-                                        if (selected) Color.White else Color.White.copy(alpha = 0.15f),
+                                        if (selected) PC.text else PC.borderSoft,
                                         CircleShape,
                                     )
                                     .clickable { scope.launch { settingsRepository.setAccent(hex) } },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 if (selected) {
-                                    Icon(Icons.Rounded.Check, name, tint = Color.White, modifier = Modifier.size(16.dp))
+                                    Icon(
+                                        Icons.Rounded.Check,
+                                        stringResource(nameRes),
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp),
+                                    )
                                 }
                             }
                         }
@@ -203,8 +218,16 @@ fun SettingsScreen(
                         RowIcon(Icons.Rounded.Brightness6)
                         Spacer(Modifier.width(12.dp))
                         Column {
-                            Text("Theme", style = MaterialTheme.typography.bodyMedium, color = PC.text)
-                            Text("App-wide appearance", style = MaterialTheme.typography.labelSmall, color = PC.text3)
+                            Text(
+                                stringResource(R.string.set_theme_title),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = PC.text,
+                            )
+                            Text(
+                                stringResource(R.string.set_theme_subtitle),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = PC.text3,
+                            )
                         }
                     }
                     Spacer(Modifier.height(10.dp))
@@ -213,7 +236,7 @@ fun SettingsScreen(
                             FilterChip(
                                 selected = settings.themeMode == mode,
                                 onClick = { scope.launch { settingsRepository.setTheme(mode) } },
-                                label = { Text(mode.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                                label = { Text(themeLabel(mode)) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     containerColor = PC.card,
                                     labelColor = PC.text2,
@@ -226,50 +249,56 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Data")
+            SectionHeader(stringResource(R.string.set_section_data))
             SettingsCard {
                 ActionRow(
                     icon = Icons.Rounded.FileDownload,
-                    title = "Export history to CSV",
-                    subtitle = "${scans.size} ${if (scans.size == 1) "row" else "rows"} • shared as a file",
+                    title = stringResource(R.string.set_export_title),
+                    subtitle = context.resources.getQuantityString(
+                        R.plurals.set_export_rows, scans.size, scans.size,
+                    ),
                     enabled = scans.isNotEmpty(),
                 ) {
                     scope.launch {
                         val file = CsvExporter.export(context, scans)
-                        snackbar.showSnackbar("Exported ${scans.size} rows to CSV")
+                        snackbar.showSnackbar(
+                            context.resources.getQuantityString(
+                                R.plurals.common_exported_rows, scans.size, scans.size,
+                            )
+                        )
                         ShareUtils.shareCsv(context, file)
                     }
                 }
                 Divider()
                 ActionRow(
                     icon = Icons.Rounded.DeleteSweep,
-                    title = "Clear history",
-                    subtitle = "Delete all saved scans permanently",
+                    title = stringResource(R.string.set_clear_history),
+                    subtitle = stringResource(R.string.set_clear_history_subtitle),
                     tint = Destructive,
                     enabled = scans.isNotEmpty(),
                 ) { confirmClear = true }
             }
 
-            SectionHeader("About")
+            SectionHeader(stringResource(R.string.set_section_about))
             SettingsCard {
                 ActionRow(
                     icon = Icons.Rounded.Info,
-                    title = "Version",
+                    title = stringResource(R.string.set_version),
                     subtitle = versionName,
                     enabled = false,
                 )
                 Divider()
                 ActionRow(
                     icon = Icons.Rounded.Lock,
-                    title = "Privacy",
-                    subtitle = "All scanning happens on-device. Frames never leave your phone.",
+                    title = stringResource(R.string.set_privacy),
+                    subtitle = stringResource(R.string.set_privacy_text),
                     enabled = false,
                 )
                 Divider()
                 ActionRow(
                     icon = Icons.Rounded.Person,
-                    title = "Developer",
-                    subtitle = "Mohammed Mosa",
+                    title = stringResource(R.string.set_developer),
+                    subtitle = stringResource(R.string.developer_name),
                     enabled = false,
                 )
 
@@ -284,23 +313,32 @@ fun SettingsScreen(
     if (confirmClear) {
         AlertDialog(
             onDismissRequest = { confirmClear = false },
-            containerColor = Color(0xFF1B1B22),
-            title = { Text("Clear history?", color = Color.White) },
-            text = { Text("All saved scans will be deleted permanently.", color = Color.White.copy(alpha = 0.7f)) },
+            containerColor = PC.dialog,
+            title = { Text(stringResource(R.string.common_clear_history_title), color = PC.text) },
+            text = { Text(stringResource(R.string.common_clear_history_text), color = PC.text2) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmClear = false
                     scope.launch {
                         repository.clearAll()
-                        snackbar.showSnackbar("History cleared")
+                        snackbar.showSnackbar(context.getString(R.string.common_history_cleared))
                     }
-                }) { Text("Clear", color = Destructive) }
+                }) { Text(stringResource(R.string.common_clear), color = Destructive) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmClear = false }) { Text("Cancel", color = Color.White) }
+                TextButton(onClick = { confirmClear = false }) {
+                    Text(stringResource(R.string.common_cancel), color = PC.text)
+                }
             },
         )
     }
+}
+
+@Composable
+private fun themeLabel(mode: ThemeMode): String = when (mode) {
+    ThemeMode.SYSTEM -> stringResource(R.string.set_theme_system)
+    ThemeMode.LIGHT -> stringResource(R.string.set_theme_light)
+    ThemeMode.DARK -> stringResource(R.string.set_theme_dark)
 }
 
 /* ---------------- building blocks ---------------- */
@@ -311,8 +349,8 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Ui.radius2xl))
-            .background(Color(0xFF14141A))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(Ui.radius2xl)),
+            .background(PC.card)
+            .border(1.dp, PC.borderSoft, RoundedCornerShape(Ui.radius2xl)),
         content = content,
     )
 }
@@ -322,7 +360,7 @@ private fun SectionHeader(text: String) {
     Text(
         text.uppercase(),
         style = MaterialTheme.typography.labelMedium,
-        color = Color.White.copy(alpha = 0.45f),
+        color = PC.text3,
         modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 8.dp),
     )
 }
@@ -334,7 +372,7 @@ private fun Divider() {
             .fillMaxWidth()
             .padding(start = 60.dp)
             .height(1.dp)
-            .background(Color.White.copy(alpha = 0.06f))
+            .background(PC.borderSoft)
     )
 }
 
@@ -367,11 +405,11 @@ private fun ToggleRow(
         RowIcon(icon)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyMedium, color = Color.White)
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = PC.text)
             Text(
                 subtitle,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.45f),
+                color = PC.text3,
             )
         }
         Spacer(Modifier.width(8.dp))
@@ -383,7 +421,7 @@ private fun ToggleRow(
                 checkedTrackColor = Brand,
                 checkedBorderColor = Color.Transparent,
                 uncheckedThumbColor = PC.text2,
-                uncheckedTrackColor = Color(0xFF2A2A33),
+                uncheckedTrackColor = PC.switchOff,
                 uncheckedBorderColor = Color.Transparent,
             ),
         )
@@ -395,7 +433,7 @@ private fun ActionRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    tint: Color = Color.White,
+    tint: Color? = null,
     enabled: Boolean = true,
     onClick: () -> Unit = {},
 ) {
@@ -406,20 +444,20 @@ private fun ActionRow(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RowIcon(icon, tint = if (tint == Color.White) Brand else tint)
+        RowIcon(icon, tint = tint ?: Brand)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyMedium, color = tint)
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = tint ?: PC.text)
             Text(
                 subtitle,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.45f),
+                color = PC.text3,
             )
         }
         if (enabled) {
             Icon(
                 Icons.Rounded.ChevronRight, null,
-                tint = Color.White.copy(alpha = 0.35f),
+                tint = PC.text3,
                 modifier = Modifier.size(18.dp),
             )
         }
@@ -434,7 +472,7 @@ private fun androidx.compose.foundation.layout.RowScope.Stat(label: String, valu
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.5f),
+            color = PC.text3,
         )
     }
 }

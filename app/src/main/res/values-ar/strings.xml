@@ -1,0 +1,261 @@
+<resources>
+    <string name="app_name">ماسح رموز QR</string>
+
+    <!-- ==================== Tabs ==================== -->
+    <string name="tab_scan">مسح</string>
+    <string name="tab_create">إنشاء</string>
+    <string name="tab_history">السجل</string>
+    <string name="tab_settings">الإعدادات</string>
+
+    <!-- ==================== Common ==================== -->
+    <string name="common_copy">نسخ</string>
+    <string name="common_copied">تم النسخ</string>
+    <string name="common_share_text">مشاركة كنص</string>
+    <string name="common_share_image">مشاركة كصورة</string>
+    <string name="common_save">حفظ</string>
+    <string name="common_delete">حذف</string>
+    <string name="common_cancel">إلغاء</string>
+    <string name="common_clear">مسح</string>
+    <string name="common_close">إغلاق</string>
+    <string name="common_undo">تراجع</string>
+    <string name="common_open">فتح</string>
+    <string name="common_open_link">فتح الرابط</string>
+    <string name="common_remove">إزالة</string>
+    <string name="common_export_csv">تصدير CSV</string>
+    <string name="common_clear_all">مسح الكل</string>
+    <string name="common_delete_selected">حذف المحدد</string>
+    <string name="common_cancel_selection">إلغاء التحديد</string>
+    <string name="common_copied_to_clipboard">تم النسخ إلى الحافظة</string>
+    <string name="common_history_cleared">تم مسح السجل</string>
+    <string name="common_clear_history_title">مسح السجل؟</string>
+    <string name="common_clear_history_text">سيتم حذف جميع عمليات المسح المحفوظة نهائيًا.</string>
+    <string name="common_saved_to_history">تم الحفظ في السجل</string>
+    <string name="common_saved_to_gallery">تم الحفظ في الصور/QR Scanner</string>
+    <string name="common_save_failed">فشل الحفظ</string>
+
+    <plurals name="common_deleted_scans">
+        <item quantity="zero">تم الحذف</item>
+        <item quantity="one">تم حذف عملية مسح واحدة</item>
+        <item quantity="two">تم حذف عمليتي مسح</item>
+        <item quantity="few">تم حذف %d عمليات مسح</item>
+        <item quantity="many">تم حذف %d عملية مسح</item>
+        <item quantity="other">تم حذف %d عملية مسح</item>
+    </plurals>
+    <plurals name="common_exported_rows">
+        <item quantity="zero">تم التصدير</item>
+        <item quantity="one">تم تصدير صف واحد إلى CSV</item>
+        <item quantity="two">تم تصدير صفّين إلى CSV</item>
+        <item quantity="few">تم تصدير %d صفوف إلى CSV</item>
+        <item quantity="many">تم تصدير %d صفًا إلى CSV</item>
+        <item quantity="other">تم تصدير %d صف إلى CSV</item>
+    </plurals>
+
+    <!-- ==================== Scanner ==================== -->
+    <string name="scan_toggle_torch">تبديل الإضاءة</string>
+    <string name="scan_pick_image">مسح من صورة</string>
+    <string name="scan_session_mode">وضع الجلسة</string>
+    <string name="scan_permission_title">يلزم الوصول إلى الكاميرا</string>
+    <string name="scan_permission_text">تُستخدم الكاميرا لاكتشاف الرموز على الجهاز. لا تغادر الإطارات هاتفك أبدًا.</string>
+    <string name="scan_permission_allow">السماح بالكاميرا</string>
+    <string name="scan_permission_retry">حاول مجددًا</string>
+    <string name="scan_hint">وجّه الكاميرا نحو رمز QR أو باركود</string>
+    <string name="scan_pill_decoding">جارٍ البحث عن رمز…</string>
+    <string name="scan_pill_not_found">لم يُعثر على رمز في تلك الصورة</string>
+    <string name="scan_pill_session_added">تمت الإضافة إلى الجلسة (%1$d)</string>
+    <string name="scan_result_title">تم اكتشاف رمز</string>
+    <string name="scan_result_subtitle">%1$s • %2$s</string>
+    <string name="scan_result_saved">محفوظ</string>
+    <string name="scan_base64_base">مشفّر بـ Base64</string>
+    <string name="scan_base64_decode">فك التشفير</string>
+    <string name="scan_base64_hide">إخفاء</string>
+    <string name="scan_base64_decoded">بعد فك التشفير</string>
+    <string name="scan_copy_decoded">نسخ النص المفكوك</string>
+    <string name="scan_scan_again">مسح مرة أخرى</string>
+
+    <!-- ==================== Scan session ==================== -->
+    <string name="session_title">جلسة المسح</string>
+    <string name="session_count">تم التقاط %1$d</string>
+    <string name="session_chip">%1$d في الجلسة</string>
+    <string name="session_empty">لم يُلتقط شيء بعد. وجّه الكاميرا نحو رمز.</string>
+    <string name="session_copy_all">نسخ الكل</string>
+    <string name="session_end">إنهاء الجلسة</string>
+
+    <!-- ==================== Content types ==================== -->
+    <string name="type_text">نص</string>
+    <string name="type_link">رابط</string>
+    <string name="type_wifi">شبكة Wi-Fi</string>
+    <string name="type_contact">جهة اتصال</string>
+    <string name="type_phone">هاتف</string>
+    <string name="type_sms">رسالة نصية</string>
+    <string name="type_email">بريد إلكتروني</string>
+    <string name="type_location">موقع جغرافي</string>
+    <string name="type_otp">رمز OTP</string>
+    <string name="type_play_store">متجر Play</string>
+
+    <!-- ==================== Smart actions ==================== -->
+    <string name="action_join_wifi">الاتصال بشبكة Wi-Fi</string>
+    <string name="action_add_contact">إضافة جهة اتصال</string>
+    <string name="action_call">اتصال</string>
+    <string name="action_email">بريد إلكتروني</string>
+    <string name="action_sms">إرسال رسالة نصية</string>
+    <string name="action_open_map">فتح الخريطة</string>
+    <string name="action_open">فتح</string>
+
+    <!-- ==================== History ==================== -->
+    <string name="hist_title">السجل</string>
+    <string name="hist_select_hint">اضغط على العناصر لإضافتها أو إزالتها</string>
+    <string name="hist_search">ابحث في عمليات المسح…</string>
+    <string name="hist_filter_all">الكل</string>
+    <string name="hist_filter_scanned">ممسوحًا ضوئيًا</string>
+    <string name="hist_filter_generated">مُنشأ</string>
+    <string name="hist_filter_favorites">المفضلة</string>
+    <string name="hist_filter_duplicates">المكررة</string>
+    <string name="hist_empty_query">لا توجد نتائج</string>
+    <string name="hist_empty_favorites">لا مفضلات بعد</string>
+    <string name="hist_empty_duplicates">لا توجد مكررات</string>
+    <string name="hist_empty_generated">لم يتم إنشاء شيء بعد</string>
+    <string name="hist_empty_scans">لا عمليات مسح بعد</string>
+    <string name="hist_empty_body">يُحفظ كل رمز تمسحه أو تنشئه هنا تلقائيًا.</string>
+    <string name="hist_row_meta">%1$s • %2$s • %3$s</string>
+    <string name="hist_created_prefix">أُنشئ • %1$s</string>
+    <string name="hist_fav">مفضلة</string>
+    <string name="hist_detail_title">تفاصيل الرمز</string>
+    <string name="hist_detail_meta">%1$s • %2$s</string>
+    <string name="hist_save_png">حفظ PNG</string>
+
+    <plurals name="hist_records">
+        <item quantity="zero">لا سجلات</item>
+        <item quantity="one">سجل واحد</item>
+        <item quantity="two">سجلان</item>
+        <item quantity="few">%d سجلات</item>
+        <item quantity="many">%d سجلًا</item>
+        <item quantity="other">%d سجل</item>
+    </plurals>
+    <plurals name="hist_selected">
+        <item quantity="zero">لا شيء محدد</item>
+        <item quantity="one">عنصر واحد محدد</item>
+        <item quantity="two">عنصران محددان</item>
+        <item quantity="few">%d عناصر محددة</item>
+        <item quantity="many">%d عنصرًا محددًا</item>
+        <item quantity="other">%d عنصر محدد</item>
+    </plurals>
+
+    <!-- ==================== Generator ==================== -->
+    <string name="gen_title">إنشاء رمز</string>
+    <string name="gen_subtitle">يُنشأ مباشرة أثناء الكتابة</string>
+    <string name="gen_format">التنسيق</string>
+    <string name="gen_format_sheet_title">اختر التنسيق</string>
+    <string name="gen_format_sheet_hint">الرموز ثنائية الأبعاد تحمل نصًا وبيانات — الباركود أحادي البعد يرمّز نصًا قصيرًا</string>
+    <string name="gen_group_2d">رموز ثنائية الأبعاد</string>
+    <string name="gen_group_1d">باركود أحادي البعد</string>
+    <string name="gen_security">التشفير</string>
+    <string name="gen_hidden_network">شبكة مخفية</string>
+    <string name="gen_type_text">نص</string>
+    <string name="gen_type_link">رابط</string>
+    <string name="gen_type_wifi">Wi-Fi</string>
+    <string name="gen_type_contact">جهة اتصال</string>
+    <string name="gen_type_email">بريد إلكتروني</string>
+    <string name="gen_type_phone">هاتف</string>
+    <string name="gen_type_sms">رسالة نصية</string>
+    <string name="gen_type_location">موقع جغرافي</string>
+    <string name="gen_sec_open">مفتوحة</string>
+    <string name="gen_sec_wpa">WPA/WPA2</string>
+    <string name="gen_sec_wep">WEP</string>
+    <string name="gen_field_text">النص</string>
+    <string name="gen_field_url">الرابط</string>
+    <string name="gen_field_url_placeholder">example.com/page</string>
+    <string name="gen_field_url_support">يُضاف https:// تلقائيًا إذا كان مفقودًا</string>
+    <string name="gen_field_ssid">اسم الشبكة (SSID)</string>
+    <string name="gen_field_ssid_placeholder">MyHomeWiFi</string>
+    <string name="gen_field_password">كلمة المرور</string>
+    <string name="gen_field_password_support">تُخزَّن كنص عادي داخل الرمز</string>
+    <string name="gen_field_name">الاسم الكامل</string>
+    <string name="gen_field_company">الشركة</string>
+    <string name="gen_field_phone">الهاتف</string>
+    <string name="gen_field_email">البريد الإلكتروني</string>
+    <string name="gen_field_recipient">المستلم</string>
+    <string name="gen_field_recipient_placeholder">name@example.com</string>
+    <string name="gen_field_subject">الموضوع</string>
+    <string name="gen_field_message">الرسالة</string>
+    <string name="gen_field_phone_number">رقم الهاتف</string>
+    <string name="gen_field_latitude">خط العرض</string>
+    <string name="gen_field_longitude">خط الطول</string>
+    <string name="gen_field_barcode_content">محتوى الباركود</string>
+    <string name="gen_code_color">لون الرمز</string>
+    <string name="gen_encoded_data">البيانات المرمّزة</string>
+    <string name="gen_preview_title">معاينة مباشرة</string>
+    <string name="gen_preview_body">يُنشأ الرمز تلقائيًا أثناء الكتابة</string>
+    <string name="gen_invalid_content">محتوى غير صالح لـ %1$s</string>
+    <string name="gen_chars">%1$s • %2$d حرفًا</string>
+    <string name="gen_share_png">مشاركة PNG</string>
+    <string name="gen_save_png">حفظ PNG</string>
+    <string name="gen_save_to_history">حفظ في السجل</string>
+    <string name="gen_hint_qr">أي نص أو رابط أو Wi-Fi أو vCard…</string>
+    <string name="gen_hint_ean13">12–13 رقمًا</string>
+    <string name="gen_hint_ean8">7–8 أرقام</string>
+    <string name="gen_hint_upca">11–12 رقمًا</string>
+    <string name="gen_hint_upce">6–8 أرقام</string>
+    <string name="gen_hint_code39">A–Z 0–9 - . $ / + % مسافة</string>
+    <string name="gen_hint_code93">A–Z 0–9 - . $ / + % مسافة</string>
+    <string name="gen_hint_code128">أي نص ASCII</string>
+    <string name="gen_hint_codabar">حرّاس A–D، مثل A2013B</string>
+    <string name="gen_hint_itf">عدد زوجي من الأرقام</string>
+    <string name="gen_hint_pdf417">أي نص</string>
+    <string name="gen_hint_aztec">أي نص</string>
+    <string name="gen_hint_datamatrix">أي نص</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="set_title">الإعدادات</string>
+    <string name="set_stat_total">إجمالي عمليات المسح</string>
+    <string name="set_stat_week">هذا الأسبوع</string>
+    <string name="set_section_scanning">المسح</string>
+    <string name="set_section_feedback">التنبيهات</string>
+    <string name="set_section_camera">الكاميرا</string>
+    <string name="set_section_appearance">المظهر</string>
+    <string name="set_section_data">البيانات</string>
+    <string name="set_section_about">حول</string>
+    <string name="set_autosave_title">حفظ عمليات المسح تلقائيًا</string>
+    <string name="set_autosave_subtitle">تُخزَّن كل عملية مسح في السجل</string>
+    <string name="set_continuous_title">مسح مستمر</string>
+    <string name="set_continuous_subtitle">الاستمرار في المسح أثناء عرض النتيجة</string>
+    <string name="set_autocopy_title">نسخ تلقائي إلى الحافظة</string>
+    <string name="set_autocopy_subtitle">نسخ القيمة فور اكتشافها</string>
+    <string name="set_autoopen_title">فتح الروابط تلقائيًا</string>
+    <string name="set_autoopen_subtitle">فتح المتصفح عند مسح رابط</string>
+    <string name="set_beep_title">تنبيه صوتي عند المسح</string>
+    <string name="set_beep_subtitle">تشغيل نغمة تأكيد</string>
+    <string name="set_vibrate_title">اهتزاز عند المسح</string>
+    <string name="set_vibrate_subtitle">نبضة اهتزاز قصيرة عند الاكتشاف</string>
+    <string name="set_frontcam_title">استخدام الكاميرا الأمامية</string>
+    <string name="set_frontcam_subtitle">التبديل بين العدسة الخلفية والأمامية</string>
+    <string name="set_accent_title">لون التمييز</string>
+    <string name="set_accent_subtitle">يُطبَّق على التطبيق كله فورًا</string>
+    <string name="accent_violet">بنفسجي</string>
+    <string name="accent_blue">أزرق</string>
+    <string name="accent_teal">تركوازي</string>
+    <string name="accent_green">أخضر</string>
+    <string name="accent_orange">برتقالي</string>
+    <string name="accent_pink">وردي</string>
+    <string name="set_theme_title">السمة</string>
+    <string name="set_theme_subtitle">مظهر التطبيق بالكامل</string>
+    <string name="set_theme_system">النظام</string>
+    <string name="set_theme_light">فاتح</string>
+    <string name="set_theme_dark">داكن</string>
+    <string name="set_export_title">تصدير السجل إلى CSV</string>
+    <string name="set_clear_history">مسح السجل</string>
+    <string name="set_clear_history_subtitle">حذف جميع عمليات المسح المحفوظة نهائيًا</string>
+    <string name="set_version">الإصدار</string>
+    <string name="set_privacy">الخصوصية</string>
+    <string name="set_privacy_text">يتم المسح بالكامل على الجهاز. لا تغادر الإطارات هاتفك أبدًا.</string>
+    <string name="set_developer">المطوّر</string>
+    <string name="developer_name">محمد موسى</string>
+
+    <plurals name="set_export_rows">
+        <item quantity="zero">لا صفوف • تُشارك كملف</item>
+        <item quantity="one">صف واحد • يُشارك كملف</item>
+        <item quantity="two">صفّان • يُشاركان كملف</item>
+        <item quantity="few">%d صفوف • تُشارك كملف</item>
+        <item quantity="many">%d صفًا • تُشارك كملف</item>
+        <item quantity="other">%d صف • يُشارك كملف</item>
+    </plurals>
+</resources>

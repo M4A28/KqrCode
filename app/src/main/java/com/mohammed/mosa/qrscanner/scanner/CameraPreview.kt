@@ -3,24 +3,30 @@ package com.mohammed.mosa.qrscanner.scanner
 
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun CameraPreview(
@@ -58,8 +64,8 @@ fun CameraPreview(
             .also {
                 it.setAnalyzer(
                     analyzerExecutor,
-                    QrAnalyzer { value, format ->
-                        if (!currentPaused) currentOnResult(value, format)
+                    QrAnalyzer(isEnabled = { !currentPaused }) { value, format ->
+                        currentOnResult(value, format)
                     },
                 )
             }
@@ -95,5 +101,29 @@ fun CameraPreview(
         }
     }
 
-    AndroidView(modifier = modifier, factory = { previewView })
+    var zoom by remember { mutableFloatStateOf(1f) }
+
+    AndroidView(
+        modifier = modifier
+            .pointerInput(Unit) {
+                detectTransformGestures { _, _, zoomChange, _ ->
+                    val c = camera ?: return@detectTransformGestures
+                    val max = c.cameraInfo.zoomState.value?.maxZoomRatio ?: 1f
+                    zoom = (zoom * zoomChange).coerceIn(1f, max)
+                    c.cameraControl.setZoomRatio(zoom)
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures { pos ->
+                    val c = camera ?: return@detectTapGestures
+                    val point = previewView.meteringPointFactory.createPoint(pos.x, pos.y)
+                    val action = FocusMeteringAction.Builder(
+                        point,
+                        FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE,
+                    ).setAutoCancelDuration(3, TimeUnit.SECONDS).build()
+                    c.cameraControl.startFocusAndMetering(action)
+                }
+            },
+        factory = { previewView },
+    )
 }

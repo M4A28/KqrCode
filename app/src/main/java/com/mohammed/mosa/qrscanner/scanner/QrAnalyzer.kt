@@ -10,6 +10,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 
 class QrAnalyzer(
+    private val isEnabled: () -> Boolean,
     private val onResult: (value: String, format: String) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
@@ -21,6 +22,9 @@ class QrAnalyzer(
 
     @androidx.annotation.OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
+        // Frames are dropped untouched while paused — no decode, no wasted CPU.
+        if (!isEnabled()) { imageProxy.close(); return }
+
         val mediaImage = imageProxy.image
         if (mediaImage == null) { imageProxy.close(); return }
 
@@ -36,8 +40,10 @@ class QrAnalyzer(
             }
             .addOnCompleteListener { imageProxy.close() }
     }
+}
 
-    private fun formatName(f: Int) = when (f) {
+/** ML Kit format int → the string stored in history. Shared with ImageCodeDecoder. */
+internal fun formatName(f: Int) = when (f) {
         Barcode.FORMAT_QR_CODE -> "QR_CODE"
         Barcode.FORMAT_EAN_13 -> "EAN_13"
         Barcode.FORMAT_EAN_8 -> "EAN_8"
@@ -53,4 +59,3 @@ class QrAnalyzer(
         Barcode.FORMAT_DATA_MATRIX -> "DATA_MATRIX"
         else -> "UNKNOWN"
     }
-}

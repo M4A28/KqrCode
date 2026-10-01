@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- QR finder-pattern glyph shown on the splash screen. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- top-left finder -->
+    <path
+        android:fillColor="#0077B6"
+        android:fillType="evenOdd"
+        android:pathData="M28,28h20v20h-20zM32,32v12h12v-12z" />
+    <path
+        android:fillColor="#0077B6"
+        android:pathData="M35,35h6v6h-6z" />
+
+    <!-- top-right finder -->
+    <path
+        android:fillColor="#0077B6"
+        android:fillType="evenOdd"
+        android:pathData="M60,28h20v20h-20zM64,32v12h12v-12z" />
+    <path
+        android:fillColor="#0077B6"
+        android:pathData="M67,35h6v6h-6z" />
+
+    <!-- bottom-left finder -->
+    <path
+        android:fillColor="#0077B6"
+        android:fillType="evenOdd"
+        android:pathData="M28,60h20v20h-20zM32,64v12h12v-12z" />
+    <path
+        android:fillColor="#0077B6"
+        android:pathData="M35,67h6v6h-6z" />
+
+    <!-- data modules, bottom-right -->
+    <path
+        android:fillColor="#0077B6"
+        android:fillType="evenOdd"
+        android:pathData="M60,60h7v7h-7zM71,60h9v7h-9zM60,71h7v9h-7zM71,75h4v4h-4z" />
+
+
+</vector>

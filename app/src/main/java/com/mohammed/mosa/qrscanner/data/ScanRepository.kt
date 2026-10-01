@@ -46,6 +46,10 @@ class ScanRepository private constructor(private val dao: ScanDao) {
     suspend fun setFavorite(id: Long, favorite: Boolean) = dao.setFavorite(id, favorite)
     suspend fun all(): List<ScanEntity> = dao.getAllOnce()
     suspend fun delete(id: Long) = dao.deleteById(id)
+    suspend fun deleteAll(ids: List<Long>) = dao.deleteByIds(ids)
+
+    /** Undo support: re-insert rows exactly as they were (ids preserved). */
+    suspend fun restoreAll(scans: List<ScanEntity>) = dao.insertAll(scans)
     suspend fun clearAll() = dao.clearAll()
 
     companion object {

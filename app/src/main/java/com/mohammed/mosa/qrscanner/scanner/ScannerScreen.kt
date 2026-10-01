@@ -2,10 +2,14 @@ package com.mohammed.mosa.qrscanner.scanner
 
 
 import android.Manifest
+import android.app.Activity
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.net.Uri
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -17,6 +21,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -24,6 +30,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +45,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -43,21 +53,47 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mohammed.mosa.qrscanner.R
 import com.mohammed.mosa.qrscanner.data.AppSettings
+import com.mohammed.mosa.qrscanner.data.CsvExporter
+import com.mohammed.mosa.qrscanner.data.ScanEntity
 import com.mohammed.mosa.qrscanner.data.ScanRepository
 import com.mohammed.mosa.qrscanner.data.SettingsRepository
+import com.mohammed.mosa.qrscanner.generate.BarcodeRenderer
+import com.mohammed.mosa.qrscanner.generate.GenFormat
 import com.mohammed.mosa.qrscanner.ui.theme.Brand
 import com.mohammed.mosa.qrscanner.ui.theme.PC
 import com.mohammed.mosa.qrscanner.ui.theme.Ui
 import com.mohammed.mosa.qrscanner.util.Base64Utils
 import com.mohammed.mosa.qrscanner.util.ScanTypes
 import com.mohammed.mosa.qrscanner.util.ShareUtils
+import com.mohammed.mosa.qrscanner.util.SmartAction
+import com.mohammed.mosa.qrscanner.util.SmartActions
+import com.mohammed.mosa.qrscanner.util.typeLabelRes
 import dev.chrisbanes.haze.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.text.format.DateUtils
+
+/** One captured code during a batch scan session. */
+data class SessionScan(val value: String, val format: String, val at: Long)
+
+private val SessionSaver = listSaver<SnapshotStateList<SessionScan>, String>(
+    save = { list -> list.flatMap { listOf(it.value, it.format, it.at.toString()) } },
+    restore = { flat ->
+        flat.chunked(3)
+            .map { SessionScan(it[0], it[1], it[2].toLong()) }
+            .toMutableStateList()
+    },
+)
 
 @Composable
-fun ScannerScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
+fun ScannerScreen(
+    repository: ScanRepository,
+    incomingImage: Uri? = null,
+    onIncomingImageHandled: () -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val haptics = LocalHapticFeedback.current
@@ -71,6 +107,13 @@ fun ScannerScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
     }
     DisposableEffect(Unit) { onDispose { runCatching { tone?.release() } } }
     val vibrator = remember { ContextCompat.getSystemService(context, Vibrator::class.java) }
+
+    // The camera is live on this tab — keep the screen awake while it's visible.
+    DisposableEffect(Unit) {
+        val window = (context as? Activity)?.window
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+    }
 
     // ---- camera permission ----
     var hasPermission by remember {
@@ -94,21 +137,78 @@ fun ScannerScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
     var showSavedPill by remember { mutableStateOf(false) }
     val scanning = result == null
 
+    // ---- batch scan session ----
+    var sessionMode by rememberSaveable { mutableStateOf(false) }
+    val session = rememberSaveable(saver = SessionSaver) { mutableStateListOf<SessionScan>() }
+    var showSession by remember { mutableStateOf(false) }
+    var sessionPillCount by remember { mutableStateOf(0) }
+
+    fun playScanFeedback() {
+        if (settings.vibrate) {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+        if (settings.sound) {
+            runCatching { tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 120) }
+        }
+    }
+
     // Base64 detection — recomputed only when the result changes
     val decoded = remember(result) { result?.let { Base64Utils.decodeOrNull(it) } }
+
+    // ---- decode from a still image (gallery pick or image shared into the app) ----
+    var decoding by remember { mutableStateOf(false) }
+    var imageNotFound by remember { mutableStateOf(false) }
+
+    fun onImagePicked(uri: Uri?) {
+        uri ?: return
+        scope.launch {
+            decoding = true
+            imageNotFound = false
+            val hit = runCatching { ImageCodeDecoder.decode(context, uri) }.getOrNull()
+            decoding = false
+            if (hit != null) {
+                if (sessionMode) {
+                    session.add(SessionScan(hit.first, hit.second, System.currentTimeMillis()))
+                    sessionPillCount = session.size
+                } else {
+                    resultFormat = hit.second
+                    result = hit.first
+                }
+            } else {
+                imageNotFound = true
+            }
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri -> onImagePicked(uri) }
+
+    LaunchedEffect(incomingImage) {
+        if (incomingImage != null) {
+            onImagePicked(incomingImage)
+            onIncomingImageHandled()
+        }
+    }
+
+    LaunchedEffect(imageNotFound) {
+        if (imageNotFound) { delay(2500); imageNotFound = false }
+    }
+
+    LaunchedEffect(sessionPillCount) {
+        if (sessionPillCount > 0) { delay(1800); sessionPillCount = 0 }
+    }
+
+    LaunchedEffect(showSavedPill) {
+        if (showSavedPill) { delay(2000); showSavedPill = false }
+    }
 
     // Feedback + auto-save + auto-open, the moment a code is detected
     LaunchedEffect(result) {
         val current = result ?: return@LaunchedEffect
         val format = resultFormat
 
-        if (settings.vibrate) {
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-            //vibrator?.vibrate(VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE))
-        }
-        if (settings.sound) {
-            runCatching { tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 120) }
-        }
+        playScanFeedback()
         if (settings.autoCopy) {
             clipboard.setText(AnnotatedString(current))
         }
@@ -129,10 +229,6 @@ fun ScannerScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(showSavedPill) {
-        if (showSavedPill) { delay(2000); showSavedPill = false }
-    }
-
     val hazeState = rememberHazeState()
 
     Surface(modifier.fillMaxSize(), color = PC.bg) {
@@ -143,12 +239,26 @@ fun ScannerScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
 
                 CameraPreview(
                     modifier = Modifier.fillMaxSize().hazeSource(hazeState),
-                    isPaused = !scanning && !settings.continuousScan,
+                    isPaused = !scanning && !settings.continuousScan && !sessionMode,
                     torchEnabled = torchOn,
                     useFrontCamera = settings.useFrontCamera,
                     onResult = { value, format ->
-                        resultFormat = format
-                        result = value
+                        if (sessionMode) {
+                            // Batch mode: collect, don't stop on a result.
+                            val now = System.currentTimeMillis()
+                            val last = session.lastOrNull()
+                            if (last?.value != value || now - last.at > 2500) {
+                                playScanFeedback()
+                                session.add(SessionScan(value, format, now))
+                                sessionPillCount = session.size
+                                if (settings.autoSave) {
+                                    repository.saveAsync(value, format)
+                                }
+                            }
+                        } else {
+                            resultFormat = format
+                            result = value
+                        }
                     },
                 )
 
@@ -163,26 +273,58 @@ fun ScannerScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
                     hazeState = hazeState,
                     torchOn = torchOn,
                     onToggleTorch = { torchOn = !torchOn },
+                    onPickImage = { galleryLauncher.launch("image/*") },
+                    sessionMode = sessionMode,
+                    onToggleSession = { sessionMode = !sessionMode },
                 )
 
-                SavedPill(
+                val pillSlot = Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .padding(top = 76.dp)
+                StatusPill(
                     visible = showSavedPill,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .statusBarsPadding()
-                        .padding(top = 76.dp),
+                    text = stringResource(R.string.common_saved_to_history),
+                    modifier = pillSlot,
+                )
+                StatusPill(
+                    visible = decoding,
+                    text = stringResource(R.string.scan_pill_decoding),
+                    modifier = pillSlot,
+                )
+                StatusPill(
+                    visible = imageNotFound,
+                    text = stringResource(R.string.scan_pill_not_found),
+                    isError = true,
+                    modifier = pillSlot,
+                )
+                StatusPill(
+                    visible = sessionPillCount > 0,
+                    text = stringResource(R.string.scan_pill_session_added, sessionPillCount),
+                    modifier = pillSlot,
                 )
 
-                HintPill(
-                    hazeState = hazeState,
-                    visible = scanning,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 24.dp),
-                )
+                if (sessionMode) {
+                    SessionChip(
+                        count = session.size,
+                        hazeState = hazeState,
+                        onClick = { showSession = true },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 24.dp),
+                    )
+                } else {
+                    HintPill(
+                        hazeState = hazeState,
+                        visible = scanning,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 24.dp),
+                    )
+                }
 
                 AnimatedVisibility(
-                    visible = !scanning,
+                    visible = !scanning && !sessionMode,
                     modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
                     enter = slideInVertically(tween(Ui.duration, easing = Ui.easing)) { it } +
                             fadeIn(tween(Ui.duration, easing = Ui.easing)),
@@ -202,9 +344,276 @@ fun ScannerScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
                         onShareImage = {
                             scope.launch { ShareUtils.shareAsImage(context, result.orEmpty()) }
                         },
-                        onScanAgain = { result = null; savedToHistory = false },
+                        onSaveImage = {
+                            scope.launch {
+                                val msg = runCatching {
+                                    val bmp = BarcodeRenderer.render(result.orEmpty(), GenFormat.QR)
+                                    ShareUtils.saveToGallery(
+                                        context, bmp, "scan_${System.currentTimeMillis()}",
+                                    )
+                                }.getOrDefault(context.getString(R.string.common_save_failed))
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        onScanAgain = {
+                            result = null; savedToHistory = false; imageNotFound = false
+                        },
                     )
                 }
+            }
+        }
+    }
+
+    if (showSession) {
+        SessionSheet(
+            session = session,
+            onDismiss = { showSession = false },
+            onCopyAll = {
+                clipboard.setText(AnnotatedString(session.joinToString("\n") { it.value }))
+                Toast.makeText(
+                    context, context.getString(R.string.common_copied_to_clipboard),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            },
+            onExport = {
+                scope.launch {
+                    runCatching {
+                        val entities = session.map {
+                            ScanEntity(
+                                value = it.value,
+                                format = it.format,
+                                type = ScanTypes.describe(it.value),
+                                isLink = ScanTypes.isLink(it.value),
+                                createdAt = it.at,
+                            )
+                        }
+                        val file = CsvExporter.export(context, entities)
+                        ShareUtils.shareCsv(context, file)
+                    }
+                }
+            },
+            onRemove = { session.remove(it) },
+            onClear = { session.clear() },
+            onEnd = {
+                session.clear()
+                sessionMode = false
+                showSession = false
+            },
+        )
+    }
+}
+
+/* ---------------- scan session ---------------- */
+
+@Composable
+private fun SessionChip(
+    count: Int,
+    hazeState: HazeState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedVisibility(
+        visible = true,
+        modifier = modifier,
+        enter = fadeIn(tween(Ui.duration, easing = Ui.easing)) +
+                slideInVertically(tween(Ui.duration, easing = Ui.easing)) { it / 2 },
+        exit = fadeOut(tween(Ui.duration, easing = Ui.easing)),
+    ) {
+        GlassPanel(shape = RoundedCornerShape(50), hazeState = hazeState, onClick = onClick) {
+            Row(
+                Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Rounded.Inventory2, null, tint = Brand, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.session_chip, count),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = PC.text,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SessionSheet(
+    session: List<SessionScan>,
+    onDismiss: () -> Unit,
+    onCopyAll: () -> Unit,
+    onExport: () -> Unit,
+    onRemove: (SessionScan) -> Unit,
+    onClear: () -> Unit,
+    onEnd: () -> Unit,
+) {
+    val clipboard = LocalClipboardManager.current
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = PC.sheet,
+        dragHandle = {
+            Box(
+                Modifier
+                    .padding(top = 10.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(PC.text.copy(alpha = 0.3f))
+            )
+        },
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.session_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = PC.text,
+                    )
+                    Text(
+                        stringResource(R.string.session_count, session.size),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = PC.text3,
+                    )
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Rounded.Close, stringResource(R.string.common_close), tint = PC.text2)
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = onCopyAll,
+                    enabled = session.isNotEmpty(),
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(Ui.radiusXl),
+                    colors = ButtonDefaults.buttonColors(containerColor = PC.well, contentColor = PC.text),
+                    border = BorderStroke(1.dp, PC.border),
+                    contentPadding = PaddingValues(vertical = 10.dp),
+                ) {
+                    Icon(Icons.Rounded.ContentCopy, null, Modifier.size(15.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.session_copy_all))
+                }
+                Button(
+                    onClick = onExport,
+                    enabled = session.isNotEmpty(),
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(Ui.radiusXl),
+                    colors = ButtonDefaults.buttonColors(containerColor = PC.well, contentColor = PC.text),
+                    border = BorderStroke(1.dp, PC.border),
+                    contentPadding = PaddingValues(vertical = 10.dp),
+                ) {
+                    Icon(Icons.Rounded.FileDownload, null, Modifier.size(15.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.common_export_csv))
+                }
+                Button(
+                    onClick = onClear,
+                    enabled = session.isNotEmpty(),
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(Ui.radiusXl),
+                    colors = ButtonDefaults.buttonColors(containerColor = PC.well, contentColor = PC.text),
+                    border = BorderStroke(1.dp, PC.border),
+                    contentPadding = PaddingValues(vertical = 10.dp),
+                ) {
+                    Icon(Icons.Rounded.DeleteSweep, null, Modifier.size(15.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.common_clear))
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            if (session.isEmpty()) {
+                Column(
+                    Modifier.fillMaxWidth().heightIn(min = 140.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(Icons.Rounded.Inventory2, null, tint = PC.text4, modifier = Modifier.size(36.dp))
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        stringResource(R.string.session_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = PC.text3,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    itemsIndexed(session, key = { _, it -> it.at }) { _, item ->
+                        val rel = remember(item.at) {
+                            DateUtils.getRelativeTimeSpanString(item.at).toString()
+                        }
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(Ui.radiusXl))
+                                .background(PC.well)
+                                .border(1.dp, PC.borderSoft, RoundedCornerShape(Ui.radiusXl))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    item.value,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = PC.text,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    rel,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = PC.text3,
+                                )
+                            }
+                            IconButton(
+                                onClick = { clipboard.setText(AnnotatedString(item.value)) },
+                                modifier = Modifier.size(30.dp),
+                            ) {
+                                Icon(
+                                    Icons.Rounded.ContentCopy, stringResource(R.string.common_copy),
+                                    tint = PC.text2, modifier = Modifier.size(15.dp),
+                                )
+                            }
+                            IconButton(
+                                onClick = { onRemove(item) },
+                                modifier = Modifier.size(30.dp),
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Close, stringResource(R.string.common_remove),
+                                    tint = PC.text3, modifier = Modifier.size(15.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            TextButton(
+                onClick = onEnd,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                shape = RoundedCornerShape(Ui.radiusXl),
+                colors = ButtonDefaults.textButtonColors(contentColor = Brand),
+            ) {
+                Icon(Icons.Rounded.CheckCircle, null, Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.session_end))
             }
         }
     }
@@ -243,10 +652,16 @@ fun GlassPanel(
     )
 }
 
-/* ---------------- saved pill ---------------- */
+/* ---------------- status pill ---------------- */
 
 @Composable
-private fun SavedPill(visible: Boolean, modifier: Modifier = Modifier) {
+private fun StatusPill(
+    visible: Boolean,
+    text: String,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+) {
+    val bg = if (isError) Color(0xFFE5484D) else Brand
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
@@ -258,13 +673,16 @@ private fun SavedPill(visible: Boolean, modifier: Modifier = Modifier) {
         Row(
             Modifier
                 .clip(RoundedCornerShape(50))
-                .background(Brand.copy(alpha = 0.92f))
+                .background(bg.copy(alpha = 0.92f))
                 .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(14.dp))
+            Icon(
+                if (isError) Icons.Rounded.ErrorOutline else Icons.Rounded.Check,
+                null, tint = Color.White, modifier = Modifier.size(14.dp),
+            )
             Spacer(Modifier.width(6.dp))
-            Text("Saved to history", style = MaterialTheme.typography.labelMedium, color = Color.White)
+            Text(text, style = MaterialTheme.typography.labelMedium, color = Color.White)
         }
     }
 }
@@ -277,6 +695,9 @@ private fun ScannerTopBar(
     hazeState: HazeState,
     torchOn: Boolean,
     onToggleTorch: () -> Unit,
+    onPickImage: () -> Unit,
+    sessionMode: Boolean,
+    onToggleSession: () -> Unit,
 ) {
     Row(
         modifier = modifier,
@@ -290,17 +711,45 @@ private fun ScannerTopBar(
             ) {
                 Icon(Icons.Rounded.QrCodeScanner, null, tint = Brand, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("QR Scanner", style = MaterialTheme.typography.labelLarge, color = PC.text)
+                Text(
+                    stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = PC.text,
+                )
             }
         }
         Spacer(Modifier.weight(1f))
+        GlassPanel(
+            shape = CircleShape, hazeState = hazeState,
+            onClick = onToggleSession, modifier = Modifier.size(46.dp),
+        ) {
+            Icon(
+                Icons.Rounded.Inventory2,
+                contentDescription = stringResource(R.string.scan_session_mode),
+                tint = if (sessionMode) Brand else PC.text,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Spacer(Modifier.width(10.dp))
+        GlassPanel(
+            shape = CircleShape, hazeState = hazeState,
+            onClick = onPickImage, modifier = Modifier.size(46.dp),
+        ) {
+            Icon(
+                Icons.Rounded.PhotoLibrary,
+                contentDescription = stringResource(R.string.scan_pick_image),
+                tint = PC.text,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Spacer(Modifier.width(10.dp))
         GlassPanel(
             shape = CircleShape, hazeState = hazeState,
             onClick = onToggleTorch, modifier = Modifier.size(46.dp),
         ) {
             Icon(
                 if (torchOn) Icons.Rounded.FlashlightOn else Icons.Rounded.FlashlightOff,
-                contentDescription = "Toggle torch",
+                contentDescription = stringResource(R.string.scan_toggle_torch),
                 tint = if (torchOn) Brand else PC.text,
                 modifier = Modifier.size(20.dp),
             )
@@ -321,7 +770,7 @@ private fun HintPill(hazeState: HazeState, visible: Boolean, modifier: Modifier 
     ) {
         GlassPanel(shape = RoundedCornerShape(50), hazeState = hazeState) {
             Text(
-                "Point your camera at a QR or barcode",
+                stringResource(R.string.scan_hint),
                 style = MaterialTheme.typography.labelMedium,
                 color = PC.text.copy(alpha = 0.85f),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -442,9 +891,12 @@ private fun ResultCard(
     onOpen: () -> Unit,
     onShareText: () -> Unit,
     onShareImage: () -> Unit,
+    onSaveImage: () -> Unit,
     onScanAgain: () -> Unit,
 ) {
+    val context = LocalContext.current
     val isLink = remember(value) { ScanTypes.isLink(value) }
+    val smart = remember(value) { SmartActions.forValue(value) }
 
     var copied by remember { mutableStateOf(false) }
     LaunchedEffect(copied) { if (copied) { delay(1500); copied = false } }
@@ -462,9 +914,17 @@ private fun ResultCard(
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("Code detected", style = MaterialTheme.typography.titleSmall, color = PC.text)
                     Text(
-                        "${ScanTypes.describe(value)} • $format",
+                        stringResource(R.string.scan_result_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = PC.text,
+                    )
+                    Text(
+                        stringResource(
+                            R.string.scan_result_subtitle,
+                            stringResource(typeLabelRes(ScanTypes.describe(value))),
+                            format,
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         color = PC.text3,
                     )
@@ -473,7 +933,11 @@ private fun ResultCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.CheckCircleOutline, null, tint = Brand, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Saved", style = MaterialTheme.typography.labelSmall, color = PC.text2)
+                        Text(
+                            stringResource(R.string.scan_result_saved),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = PC.text2,
+                        )
                     }
                 }
             }
@@ -506,12 +970,22 @@ private fun ResultCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.Code, null, tint = Brand, modifier = Modifier.size(15.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Base64 encoded", style = MaterialTheme.typography.labelSmall, color = PC.text2, modifier = Modifier.weight(1f))
+                    Text(
+                        stringResource(R.string.scan_base64_base),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PC.text2,
+                        modifier = Modifier.weight(1f),
+                    )
                     TextButton(
                         onClick = { showDecoded = !showDecoded },
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                         colors = ButtonDefaults.textButtonColors(contentColor = Brand),
-                    ) { Text(if (showDecoded) "Hide" else "Decode") }
+                    ) {
+                        Text(
+                            if (showDecoded) stringResource(R.string.scan_base64_hide)
+                            else stringResource(R.string.scan_base64_decode)
+                        )
+                    }
                 }
                 AnimatedVisibility(visible = showDecoded) {
                     Box(
@@ -523,11 +997,21 @@ private fun ResultCard(
                     ) {
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Decoded", style = MaterialTheme.typography.labelSmall, color = PC.text3, modifier = Modifier.weight(1f))
+                                Text(
+                                    stringResource(R.string.scan_base64_decoded),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = PC.text3,
+                                    modifier = Modifier.weight(1f),
+                                )
                                 Box(
                                     Modifier.clip(CircleShape).clickable(onClick = onCopyDecoded).padding(4.dp)
                                 ) {
-                                    Icon(Icons.Rounded.ContentCopy, "Copy decoded", tint = PC.text2, modifier = Modifier.size(15.dp))
+                                    Icon(
+                                        Icons.Rounded.ContentCopy,
+                                        stringResource(R.string.scan_copy_decoded),
+                                        tint = PC.text2,
+                                        modifier = Modifier.size(15.dp),
+                                    )
                                 }
                             }
                             Spacer(Modifier.height(4.dp))
@@ -546,18 +1030,33 @@ private fun ResultCard(
             Spacer(Modifier.height(16.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isLink) {
-                    Button(
-                        onClick = onOpen,
-                        shape = RoundedCornerShape(Ui.radiusXl),
-                        colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = Color.White),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
-                    ) {
-                        Icon(Icons.Rounded.OpenInNew, null, Modifier.size(15.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Open link")
+                when {
+                    isLink -> {
+                        Button(
+                            onClick = onOpen,
+                            shape = RoundedCornerShape(Ui.radiusXl),
+                            colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = Color.White),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                        ) {
+                            Icon(Icons.Rounded.OpenInNew, null, Modifier.size(15.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(stringResource(R.string.common_open_link))
+                        }
+                        Spacer(Modifier.width(10.dp))
                     }
-                    Spacer(Modifier.width(10.dp))
+                    smart != null -> {
+                        Button(
+                            onClick = { smart.execute(context) },
+                            shape = RoundedCornerShape(Ui.radiusXl),
+                            colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = Color.White),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                        ) {
+                            Icon(smart.icon, null, Modifier.size(15.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(stringResource(smart.labelRes))
+                        }
+                        Spacer(Modifier.width(10.dp))
+                    }
                 }
                 Button(
                     onClick = { onCopy(); copied = true },
@@ -568,7 +1067,10 @@ private fun ResultCard(
                 ) {
                     Icon(if (copied) Icons.Rounded.Check else Icons.Rounded.ContentCopy, null, Modifier.size(15.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(if (copied) "Copied" else "Copy")
+                    Text(
+                        if (copied) stringResource(R.string.common_copied)
+                        else stringResource(R.string.common_copy)
+                    )
                 }
                 Spacer(Modifier.weight(1f))
                 TextButton(
@@ -578,13 +1080,25 @@ private fun ResultCard(
                 ) {
                     Icon(Icons.Rounded.Refresh, null, Modifier.size(15.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Scan again")
+                    Text(stringResource(R.string.scan_scan_again))
                 }
             }
 
             Spacer(Modifier.height(10.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = onSaveImage,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(Ui.radiusXl),
+                    colors = ButtonDefaults.buttonColors(containerColor = PC.well, contentColor = PC.text),
+                    border = BorderStroke(1.dp, PC.border),
+                    contentPadding = PaddingValues(vertical = 10.dp),
+                ) {
+                    Icon(Icons.Rounded.Save, null, Modifier.size(15.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.common_save))
+                }
                 Button(
                     onClick = onShareText,
                     modifier = Modifier.weight(1f),
@@ -594,8 +1108,8 @@ private fun ResultCard(
                     contentPadding = PaddingValues(vertical = 10.dp),
                 ) {
                     Icon(Icons.Rounded.Share, null, Modifier.size(15.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Share as text")
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.common_share_text))
                 }
                 Button(
                     onClick = onShareImage,
@@ -606,8 +1120,8 @@ private fun ResultCard(
                     contentPadding = PaddingValues(vertical = 10.dp),
                 ) {
                     Icon(Icons.Rounded.Image, null, Modifier.size(15.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Share as image")
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.common_share_image))
                 }
             }
         }
@@ -632,10 +1146,14 @@ private fun PermissionCard(askedBefore: Boolean, onRequest: () -> Unit) {
             Icon(Icons.Rounded.PhotoCamera, null, tint = Brand, modifier = Modifier.size(26.dp))
         }
         Spacer(Modifier.height(24.dp))
-        Text("Camera access needed", style = MaterialTheme.typography.titleLarge, color = PC.text)
+        Text(
+            stringResource(R.string.scan_permission_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = PC.text,
+        )
         Spacer(Modifier.height(8.dp))
         Text(
-            "The camera is used to detect codes on-device. Frames never leave your phone.",
+            stringResource(R.string.scan_permission_text),
             style = MaterialTheme.typography.bodyMedium,
             color = PC.text2,
             textAlign = TextAlign.Center,
@@ -647,7 +1165,10 @@ private fun PermissionCard(askedBefore: Boolean, onRequest: () -> Unit) {
             colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = Color.White),
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
         ) {
-            Text(if (askedBefore) "Try again" else "Allow camera")
+            Text(
+                if (askedBefore) stringResource(R.string.scan_permission_retry)
+                else stringResource(R.string.scan_permission_allow)
+            )
         }
     }
 }

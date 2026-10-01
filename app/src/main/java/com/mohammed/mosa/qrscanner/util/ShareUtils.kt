@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
+import com.mohammed.mosa.qrscanner.R
 import com.mohammed.mosa.qrscanner.generate.BarcodeRenderer
 import com.mohammed.mosa.qrscanner.generate.GenFormat
 
@@ -84,11 +85,11 @@ object ShareUtils {
                 }
                 val uri = context.contentResolver
                     .insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-                    ?: return@withContext "Save failed"
+                    ?: return@withContext context.getString(R.string.common_save_failed)
                 context.contentResolver.openOutputStream(uri)?.use {
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
                 }
-                "Saved to Pictures/QR Scanner"
+                context.getString(R.string.common_saved_to_gallery)
             } else {
                 val dir = File(
                     context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),

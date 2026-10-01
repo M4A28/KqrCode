@@ -1,3 +1,241 @@
 <resources>
-    <string name="app_name">Qr Scanner</string>
+    <string name="app_name">QR Scanner</string>
+
+    <!-- ==================== Tabs ==================== -->
+    <string name="tab_scan">Scan</string>
+    <string name="tab_create">Create</string>
+    <string name="tab_history">History</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- ==================== Common ==================== -->
+    <string name="common_copy">Copy</string>
+    <string name="common_copied">Copied</string>
+    <string name="common_share_text">Share text</string>
+    <string name="common_share_image">Share image</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_clear">Clear</string>
+    <string name="common_close">Close</string>
+    <string name="common_undo">Undo</string>
+    <string name="common_open">Open</string>
+    <string name="common_open_link">Open link</string>
+    <string name="common_remove">Remove</string>
+    <string name="common_export_csv">Export CSV</string>
+    <string name="common_clear_all">Clear all</string>
+    <string name="common_delete_selected">Delete selected</string>
+    <string name="common_cancel_selection">Cancel selection</string>
+    <string name="common_copied_to_clipboard">Copied to clipboard</string>
+    <string name="common_history_cleared">History cleared</string>
+    <string name="common_clear_history_title">Clear history?</string>
+    <string name="common_clear_history_text">All saved scans will be deleted permanently.</string>
+    <string name="common_saved_to_history">Saved to history</string>
+    <string name="common_saved_to_gallery">Saved to Pictures/QR Scanner</string>
+    <string name="common_save_failed">Save failed</string>
+
+    <plurals name="common_deleted_scans">
+        <item quantity="one">Deleted %d scan</item>
+        <item quantity="other">Deleted %d scans</item>
+    </plurals>
+    <plurals name="common_exported_rows">
+        <item quantity="one">Exported %d row to CSV</item>
+        <item quantity="other">Exported %d rows to CSV</item>
+    </plurals>
+
+    <!-- ==================== Scanner ==================== -->
+    <string name="scan_toggle_torch">Toggle torch</string>
+    <string name="scan_pick_image">Scan from image</string>
+    <string name="scan_session_mode">Session mode</string>
+    <string name="scan_permission_title">Camera access needed</string>
+    <string name="scan_permission_text">The camera is used to detect codes on-device. Frames never leave your phone.</string>
+    <string name="scan_permission_allow">Allow camera</string>
+    <string name="scan_permission_retry">Try again</string>
+    <string name="scan_hint">Point your camera at a QR or barcode</string>
+    <string name="scan_pill_decoding">Looking for a code…</string>
+    <string name="scan_pill_not_found">No code found in that image</string>
+    <string name="scan_pill_session_added">Added to session (%1$d)</string>
+    <string name="scan_result_title">Code detected</string>
+    <string name="scan_result_subtitle">%1$s • %2$s</string>
+    <string name="scan_result_saved">Saved</string>
+    <string name="scan_base64_base">Base64 encoded</string>
+    <string name="scan_base64_decode">Decode</string>
+    <string name="scan_base64_hide">Hide</string>
+    <string name="scan_base64_decoded">Decoded</string>
+    <string name="scan_copy_decoded">Copy decoded</string>
+    <string name="scan_scan_again">Scan again</string>
+
+    <!-- ==================== Scan session ==================== -->
+    <string name="session_title">Scan session</string>
+    <string name="session_count">%1$d captured</string>
+    <string name="session_chip">%1$d in session</string>
+    <string name="session_empty">Nothing captured yet. Point the camera at a code.</string>
+    <string name="session_copy_all">Copy all</string>
+    <string name="session_end">End session</string>
+
+    <!-- ==================== Content types ==================== -->
+    <string name="type_text">Text</string>
+    <string name="type_link">Link</string>
+    <string name="type_wifi">Wi-Fi</string>
+    <string name="type_contact">Contact</string>
+    <string name="type_phone">Phone</string>
+    <string name="type_sms">SMS</string>
+    <string name="type_email">Email</string>
+    <string name="type_location">Location</string>
+    <string name="type_otp">OTP</string>
+    <string name="type_play_store">Play Store</string>
+
+    <!-- ==================== Smart actions ==================== -->
+    <string name="action_join_wifi">Join Wi-Fi</string>
+    <string name="action_add_contact">Add contact</string>
+    <string name="action_call">Call</string>
+    <string name="action_email">Email</string>
+    <string name="action_sms">Send SMS</string>
+    <string name="action_open_map">Open map</string>
+    <string name="action_open">Open</string>
+
+    <!-- ==================== History ==================== -->
+    <string name="hist_title">History</string>
+    <string name="hist_select_hint">Tap scans to add or remove them</string>
+    <string name="hist_search">Search scans…</string>
+    <string name="hist_filter_all">All</string>
+    <string name="hist_filter_scanned">Scanned</string>
+    <string name="hist_filter_generated">Generated</string>
+    <string name="hist_filter_favorites">Favorites</string>
+    <string name="hist_filter_duplicates">Duplicates</string>
+    <string name="hist_empty_query">No matches</string>
+    <string name="hist_empty_favorites">No favorites yet</string>
+    <string name="hist_empty_duplicates">No duplicates found</string>
+    <string name="hist_empty_generated">Nothing generated yet</string>
+    <string name="hist_empty_scans">No scans yet</string>
+    <string name="hist_empty_body">Every code you scan or create is saved here automatically.</string>
+    <string name="hist_row_meta">%1$s • %2$s • %3$s</string>
+    <string name="hist_created_prefix">Created • %1$s</string>
+    <string name="hist_fav">Fav</string>
+    <string name="hist_detail_title">Code details</string>
+    <string name="hist_detail_meta">%1$s • %2$s</string>
+    <string name="hist_save_png">Save PNG</string>
+
+    <plurals name="hist_records">
+        <item quantity="one">%d record</item>
+        <item quantity="other">%d records</item>
+    </plurals>
+    <plurals name="hist_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+
+    <!-- ==================== Generator ==================== -->
+    <string name="gen_title">Create code</string>
+    <string name="gen_subtitle">Generates live as you type</string>
+    <string name="gen_format">Format</string>
+    <string name="gen_format_sheet_title">Choose format</string>
+    <string name="gen_format_sheet_hint">2D codes hold text and data — 1D barcodes encode short ASCII</string>
+    <string name="gen_group_2d">2D codes</string>
+    <string name="gen_group_1d">1D barcodes</string>
+    <string name="gen_security">Security</string>
+    <string name="gen_hidden_network">Hidden network</string>
+    <string name="gen_type_text">Text</string>
+    <string name="gen_type_link">Link</string>
+    <string name="gen_type_wifi">Wi-Fi</string>
+    <string name="gen_type_contact">Contact</string>
+    <string name="gen_type_email">Email</string>
+    <string name="gen_type_phone">Phone</string>
+    <string name="gen_type_sms">SMS</string>
+    <string name="gen_type_location">Location</string>
+    <string name="gen_sec_open">Open</string>
+    <string name="gen_sec_wpa">WPA/WPA2</string>
+    <string name="gen_sec_wep">WEP</string>
+    <string name="gen_field_text">Text</string>
+    <string name="gen_field_url">URL</string>
+    <string name="gen_field_url_placeholder">example.com/page</string>
+    <string name="gen_field_url_support">https:// is added automatically if missing</string>
+    <string name="gen_field_ssid">Network name (SSID)</string>
+    <string name="gen_field_ssid_placeholder">MyHomeWiFi</string>
+    <string name="gen_field_password">Password</string>
+    <string name="gen_field_password_support">Stored as plain text inside the code</string>
+    <string name="gen_field_name">Full name</string>
+    <string name="gen_field_company">Company</string>
+    <string name="gen_field_phone">Phone</string>
+    <string name="gen_field_email">Email</string>
+    <string name="gen_field_recipient">Recipient</string>
+    <string name="gen_field_recipient_placeholder">name@example.com</string>
+    <string name="gen_field_subject">Subject</string>
+    <string name="gen_field_message">Message</string>
+    <string name="gen_field_phone_number">Phone number</string>
+    <string name="gen_field_latitude">Latitude</string>
+    <string name="gen_field_longitude">Longitude</string>
+    <string name="gen_field_barcode_content">Barcode content</string>
+    <string name="gen_code_color">Code color</string>
+    <string name="gen_encoded_data">Encoded data</string>
+    <string name="gen_preview_title">Live preview</string>
+    <string name="gen_preview_body">Your code generates automatically as you type</string>
+    <string name="gen_invalid_content">Invalid content for %1$s</string>
+    <string name="gen_chars">%1$s • %2$d characters</string>
+    <string name="gen_share_png">Share PNG</string>
+    <string name="gen_save_png">Save PNG</string>
+    <string name="gen_save_to_history">Save to history</string>
+    <string name="gen_hint_qr">Any text, URL, Wi-Fi, vCard…</string>
+    <string name="gen_hint_ean13">12–13 digits</string>
+    <string name="gen_hint_ean8">7–8 digits</string>
+    <string name="gen_hint_upca">11–12 digits</string>
+    <string name="gen_hint_upce">6–8 digits</string>
+    <string name="gen_hint_code39">A–Z 0–9 - . $ / + % space</string>
+    <string name="gen_hint_code93">A–Z 0–9 - . $ / + % space</string>
+    <string name="gen_hint_code128">Any ASCII text</string>
+    <string name="gen_hint_codabar">A–D guards, e.g. A2013B</string>
+    <string name="gen_hint_itf">Even number of digits</string>
+    <string name="gen_hint_pdf417">Any text</string>
+    <string name="gen_hint_aztec">Any text</string>
+    <string name="gen_hint_datamatrix">Any text</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="set_title">Settings</string>
+    <string name="set_stat_total">Total scans</string>
+    <string name="set_stat_week">This week</string>
+    <string name="set_section_scanning">Scanning</string>
+    <string name="set_section_feedback">Feedback</string>
+    <string name="set_section_camera">Camera</string>
+    <string name="set_section_appearance">Appearance</string>
+    <string name="set_section_data">Data</string>
+    <string name="set_section_about">About</string>
+    <string name="set_autosave_title">Auto-save scans</string>
+    <string name="set_autosave_subtitle">Every scan is stored in history</string>
+    <string name="set_continuous_title">Continuous scan</string>
+    <string name="set_continuous_subtitle">Keep scanning while a result is shown</string>
+    <string name="set_autocopy_title">Auto-copy to clipboard</string>
+    <string name="set_autocopy_subtitle">Copy the value as soon as it\'s detected</string>
+    <string name="set_autoopen_title">Auto-open Urls</string>
+    <string name="set_autoopen_subtitle">Open the browser when a URL is scanned</string>
+    <string name="set_beep_title">Beep on scan</string>
+    <string name="set_beep_subtitle">Play a confirmation tone</string>
+    <string name="set_vibrate_title">Vibrate on scan</string>
+    <string name="set_vibrate_subtitle">Short haptic pulse on detection</string>
+    <string name="set_frontcam_title">Use front camera</string>
+    <string name="set_frontcam_subtitle">Switch between rear and front lens</string>
+    <string name="set_accent_title">Accent color</string>
+    <string name="set_accent_subtitle">Applies across the whole app instantly</string>
+    <string name="accent_violet">Violet</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_green">Green</string>
+    <string name="accent_orange">Orange</string>
+    <string name="accent_pink">Pink</string>
+    <string name="set_theme_title">Theme</string>
+    <string name="set_theme_subtitle">App-wide appearance</string>
+    <string name="set_theme_system">System</string>
+    <string name="set_theme_light">Light</string>
+    <string name="set_theme_dark">Dark</string>
+    <string name="set_export_title">Export history to CSV</string>
+    <string name="set_clear_history">Clear history</string>
+    <string name="set_clear_history_subtitle">Delete all saved scans permanently</string>
+    <string name="set_version">Version</string>
+    <string name="set_privacy">Privacy</string>
+    <string name="set_privacy_text">All scanning happens on-device. Frames never leave your phone.</string>
+    <string name="set_developer">Developer</string>
+    <string name="developer_name">Mohammed Mosa</string>
+
+    <plurals name="set_export_rows">
+        <item quantity="one">%d row • shared as a file</item>
+        <item quantity="other">%d rows • shared as a file</item>
+    </plurals>
 </resources>

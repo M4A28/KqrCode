@@ -24,6 +24,10 @@ interface ScanDao {
     @Insert
     suspend fun insert(scan: ScanEntity): Long
 
+    /** Re-inserts previous rows (with their ids) — used by the delete undo flow. */
+    @Insert
+    suspend fun insertAll(scans: List<ScanEntity>)
+
     @Query("SELECT * FROM scans ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<ScanEntity>>
 
@@ -38,6 +42,9 @@ interface ScanDao {
 
     @Query("DELETE FROM scans WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM scans WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
 
     @Query("DELETE FROM scans")
     suspend fun clearAll()
