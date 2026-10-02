@@ -4,6 +4,13 @@ A fast, private, offline-first QR & barcode scanner for Android. Everything —
 detection, generation, history — happens on-device. No analytics, no tracking,
 no network permissions.
 
+<p align="center">
+  <img src="sample/01_Invest_Android_Phone-Portrait_1080x1920.png" alt="QR Scanner — scanner screen" width="220"/>
+  <img src="sample/02_Full_Screen_Android_Phone-Portrait_1080x1920.png" alt="QR Scanner — generator screen" width="220"/>
+  <img src="sample/03_Market_Highs_Android_Phone-Portrait_1080x1920.png" alt="QR Scanner — history screen" width="220"/>
+  <img src="sample/04_Patterns_Android_Phone-Portrait_1080x1920.png" alt="QR Scanner — settings screen" width="220"/>
+</p>
+
 ## Features
 
 **Scan**
