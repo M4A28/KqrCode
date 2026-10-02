@@ -1,6 +1,6 @@
 package com.mohammed.mosa.qrscanner
 
-
+///
 
 import android.content.Intent
 import android.net.Uri
