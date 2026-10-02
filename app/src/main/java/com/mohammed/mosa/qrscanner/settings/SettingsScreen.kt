@@ -301,6 +301,28 @@ fun SettingsScreen(
                     subtitle = stringResource(R.string.developer_name),
                     enabled = false,
                 )
+                Divider()
+                val email = stringResource(R.string.developer_email)
+                ActionRow(
+                    icon = Icons.Rounded.Email,
+                    title = email,
+                    subtitle = stringResource(R.string.set_email_action),
+                ) { ShareUtils.sendEmail(context, email) }
+                Divider()
+                val github = stringResource(R.string.developer_github)
+                ActionRow(
+                    icon = Icons.Rounded.Code,
+                    title = github,
+                    subtitle = stringResource(R.string.set_github_action),
+                ) { ShareUtils.openLink(context, github) }
+
+                Divider()
+                val myWebsite = stringResource(R.string.developer_website)
+                ActionRow(
+                    icon = Icons.Rounded.Code,
+                    title = github,
+                    subtitle = stringResource(R.string.set_mywebsite_action),
+                ) { ShareUtils.openLink(context, myWebsite) }
 
             }
 

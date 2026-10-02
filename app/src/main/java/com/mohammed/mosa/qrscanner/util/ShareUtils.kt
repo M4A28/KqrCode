@@ -35,6 +35,12 @@ object ShareUtils {
         context.startActivity(Intent.createChooser(send, "Share text"))
     }
 
+    /** Opens the user's email app with a new draft addressed to [address]. */
+    fun sendEmail(context: Context, address: String) {
+        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$address"))
+        runCatching { context.startActivity(intent) }
+    }
+
     /** Renders `value` as a QR code PNG and opens the share sheet. */
     suspend fun shareAsImage(context: Context, value: String) {
         val bitmap = withContext(Dispatchers.Default) {

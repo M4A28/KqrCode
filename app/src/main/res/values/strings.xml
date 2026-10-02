@@ -233,6 +233,13 @@
     <string name="set_privacy_text">All scanning happens on-device. Frames never leave your phone.</string>
     <string name="set_developer">Developer</string>
     <string name="developer_name">Mohammed Mosa</string>
+    <string name="developer_email">mohammed.mosa.eg@gmail.com</string>
+    <string name="developer_github">https://github.com/M4A28</string>
+    <string name="developer_website">https://mohammedpro.vercel.app/</string>
+    <string name="set_email_action">Send an email</string>
+    <string name="set_github_action">Open GitHub profile</string>
+    <string name="set_mywebsite_action">Open My profile</string>
+
 
     <plurals name="set_export_rows">
         <item quantity="one">%d row • shared as a file</item>

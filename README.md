@@ -21,6 +21,8 @@ no network permissions.
 **Create**
 - 13 barcode formats (all offline, via ZXing)
 - Templates for text, links, Wi-Fi, contacts, email, phone, SMS, and geo locations
+- Social media links (Instagram, WhatsApp, X, TikTok, YouTube, Telegram, and more) automatically get the platform's logo in the QR center
+- Every generated image carries `mohammedpro.vercel.app` under the code
 - Live preview as you type, six code colors
 - Share as PNG, save to gallery (`Pictures/QR Scanner`), or save to history
 

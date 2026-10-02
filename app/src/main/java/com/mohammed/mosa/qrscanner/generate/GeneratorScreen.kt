@@ -236,9 +236,24 @@ fun GeneratorScreen(repository: ScanRepository, modifier: Modifier = Modifier) {
         }
         delay(300) // debounce keystrokes
         generating = true
+
+        // Social media links get their platform logo in the QR center.
+        val platform = SocialPlatform.detect(encoded)
+        val logo = if (format == GenFormat.QR && platform != null) {
+            SocialBranding.logoBitmap(context, platform, 320)
+        } else {
+            null
+        }
+
         val outcome = withContext(Dispatchers.Default) {
             runCatching {
-                BarcodeRenderer.render(encoded, format, foregroundColor = codeColor.toArgb())
+                BarcodeRenderer.renderStyled(
+                    encoded,
+                    format,
+                    foregroundColor = codeColor.toArgb(),
+                    logo = logo,
+                    footer = SocialBranding.FOOTER_TEXT,
+                )
             }
         }
         outcome.fold(

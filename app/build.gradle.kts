@@ -113,7 +113,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
 
-    val camerax = "1.3.4"
+    val camerax = "1.6.2" // 1.4.0+ ships 16 KB-aligned native libs (Play requirement)
     implementation("androidx.camera:camera-core:$camerax")
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
